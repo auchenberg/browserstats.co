@@ -1,0 +1,56 @@
+body {
+  background: #f7f7f7;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  
+  padding: 0;
+  margin: 0;
+}
+
+h1, h2, h3 {
+  font-family: 'Roboto', sans-serif;
+  font-style: normal;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 48px;
+  margin: 0 0 10px 0;
+}
+
+h1 span {
+  font-weight: normal;
+}
+
+h2 {
+  font-weight: normal;
+  margin: 10px 0;
+  font-size: 24px;
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: normal;
+}
+
+header {
+  padding: 30px 0;
+  text-align: center;
+}
+
+.logo {
+  width: 10%;
+}
+
+.page {
+  max-width: 800px;
+  margin: 0 auto; 
+}
+
+.box {
+  background: #fff;
+  padding: 40px;
+  margin-bottom: 40px;
+}

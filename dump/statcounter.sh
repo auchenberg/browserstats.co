@@ -16,7 +16,7 @@ for url in ${urls[@]}; do
   kind=`echo $url | cut -d '/' -f 5`
 
   # find date of latest dump
-  latest_dump=`ls dump/$kind*.csv | sort | tail -1` 
+  latest_dump=`ls statcounter/$kind*.csv | sort | tail -1`
 
   if [[ -n "$latest_dump" ]]; then
     latest_dump_year=`echo $latest_dump | awk -F '[^0-9]*' '{print $2}'`
@@ -37,7 +37,7 @@ for url in ${urls[@]}; do
         continue
       fi
 
-      filename="dump/$kind-$year-$month.csv" 
+      filename="statcounter/$kind-$year-$month.csv"
 
       if [[ ! -f "$filename" ]]; then
         echo -n "Downloading $filename... "

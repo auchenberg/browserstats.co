@@ -11,11 +11,11 @@ latest_dump_month=5
 latest_dump_year=2007
 
 # find date of latest dump
-latest_dump=`ls -t dump/*.html | head -1` 
+latest_dump=`ls w3counter/*.html | sort | tail -1`
 
 if [[ -n "$latest_dump" ]]; then
-  latest_dump_month=`echo $latest_dump | awk -F '[^0-9]*' '{print $3}'`
-  latest_dump_year=`echo $latest_dump | awk -F '[^0-9]*' '{print $2}'`
+  latest_dump_month=`echo $latest_dump | awk -F '[^0-9]*' '{print $2}'`
+  latest_dump_year=`echo $latest_dump | awk -F '[^0-9]*' '{print $3}'`
 fi
 
 echo -e "Last found dump is from $latest_dump_year-$latest_dump_month.\n"
@@ -32,7 +32,7 @@ for year in $(seq $latest_dump_year $current_year); do
       continue
     fi
 
-    filename="dump/stats-$year-$month.html" 
+    filename="w3counter/stats-$year-$month.html"
 
     if [[ ! -f "$filename" ]]; then
       echo -n "Downloading $filename... "

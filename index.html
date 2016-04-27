@@ -5,79 +5,62 @@
     <link rel="stylesheet" href="app.css" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600|Roboto:400,700' rel='stylesheet' type='text/css'>
      
+    <script type="text/javascript" src="node_modules/whatwg-fetch/fetch.js"></script>
+    <script type="text/javascript" src="node_modules/moment/min/moment.min.js"></script>
+    
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
     
     
-    var rawData = [{
-            "year" :2007,
-            "month" :10,
-            "ie": 66.4,
-            "Firefox": 26.6,
-            "Safari": 2.3,
-            "Opera": 1.8
-        },
-        {
-            "year" :2007,
-            "month" :11,          
-            "ie": 64.1,
-            "Firefox": 28.3,
-            "Safari": 2.6,
-            "Opera": 2.0
-        },
-        {
-            "year" :2007,
-            "month" : 12,   
-            "ie": 63.9,
-            "Firefox": 28.5,
-            "Safari": 2.6,
-            "Opera": 2.0
-    }]
-
-    function prepareData(input) {        
-        var output = {
-            cols: [
-              { id: 'year', label: 'Year', type: 'date'},
-              { id: 'ie', label: 'Internet Explorer', type: 'number'},
-              { id: 'firefox', label: 'Firefox', type: 'number'},
-              { id: 'safari', label: 'Safari', type: 'number'},
-              { id: 'opera', label: 'Opera', type: 'number'}
-            ],          
-        }   
+      function Dashboard() {
+       
+        this.isChartReady = false
+        this.formattedData = null
         
-        output.rows = input.map(function(data) {  
-          return {
-            c:[
-               {v: new Date(data["year"], data["month"])},
-               {v: data["ie"]}, 
-               {v: data["Firefox"]}, 
-               {v: data["Safari"]}, 
-               {v: data["Opera"]}, 
-            ]
-          }          
-        })
-                
-        return output;
-        
-    }
-      google.charts.load('current', {'packages':['corechart', 'controls']});
+        google.charts.load('current', {'packages':['corechart', 'controls', 'table']});
+        google.charts.setOnLoadCallback(this.onChartReady.bind(this));
       
-      google.charts.setOnLoadCallback(drawDashboard);
-            
-      // function fetchData() {
+        this.fetchData();
         
-      //   return window.fetch('/data.json').then(function(response) {
-      //       return console.log('fetched', response)
-      //   });
-        
-      // }
+      }
+      
+      Dashboard.prototype.fetchData = function() {
 
-      function drawDashboard() {
+        window.fetch('/latest.json').then(function(response) {
+          return response.json()
+        }.bind(this)).then(function(json) {
+          this.onDataLoaded(json)
+        }.bind(this)).catch(function(ex) {
+          console.log('parsing failed', ex)
+        })  
+     
+      }
+      
+      Dashboard.prototype.onDataLoaded = function(rawData) {
         
-        // Create our data table.
-        var formattedData = prepareData(rawData);
+        var w3CounterData = rawData.w3counter.web_browser_market_share.results
+               
+        this.formattedData = prepareData(w3CounterData);
         
-        var data = new google.visualization.DataTable(formattedData);
+        if(this.isChartReady) {
+          this.drawChart()
+        }
+      }    
+      
+      Dashboard.prototype.onChartReady = function() {
+        this.isChartReady = true
+        
+         if(this.formattedData) {
+          this.drawChart()
+        }
+               
+      }  
+   
+      Dashboard.prototype.drawChart = function() {
+                
+        var data = new google.visualization.DataTable(this.formattedData);
+
+        data.sort([{column: 0, desc:true}]);
         
         console.log('data', data)
 
@@ -103,16 +86,60 @@
             width: '100%',
             height: 500,
             legend: 'right',
-            curveType: 'function',
             pointSize: 7,      
           },
           // 'view': {'columns': [0, 1, 2, 3, 4]}
         });
-        
+      
+        // Create a pie chart, passing some options
+        var dataTable = new google.visualization.ChartWrapper({
+          'chartType': 'Table',
+          'containerId': 'table',
+          'options': {
+            width: '100%',
+            height: 500,
+            legend: 'right',
+            pointSize: 5,      
+          },
+          // 'view': {'columns': [0, 1, 2, 3, 4]}
+        });
+          
+
         dashboard.bind([slider], [lineChart]);
+        dashboard.bind([slider], [dataTable]);
         dashboard.draw(data);
 
       }
+      
+      
+      new Dashboard();
+      
+    function prepareData(input) {        
+      var output = {
+        cols: [
+          { id: 'year', label: 'Year', type: 'date', },
+          { id: 'ie', label: 'Internet Explorer', type: 'number',},
+          { id: 'firefox', label: 'Firefox', type: 'number', },
+          { id: 'safari', label: 'Safari', type: 'number',},
+          { id: 'opera', label: 'Opera', type: 'number',}
+        ]         
+      }   
+      
+      output.rows = input.map(function(data) {  
+        return {
+          c:[
+              { v: moment(data["month"] + "-01-" + data["year"], "MM-DD-YYYY").toDate() },
+              { v: data["Internet Explorer & Edge"]}, 
+              { v: data["Firefox"]}, 
+              { v: data["Safari"]}, 
+              { v: data["Opera"]}, 
+          ]
+        }          
+      })
+              
+      return output;        
+    }
+    
     </script>
   </head>
   <body>
@@ -140,6 +167,7 @@
         <h2>Global browser statistics from START to END</h2>
                 
         <div id="chart_div"></div>
+        <div id="table"></div>
     
         <button>Save as image</button>
       </div>

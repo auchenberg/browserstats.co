@@ -1,7 +1,14 @@
 require 'nokogiri'
 require 'json'
 
-results = Hash.new { |h,k| h[k] = Hash.new(&h.default_proc) }
+results = {
+  w3counter: {
+    web_browser_market_share: {
+      browser_names: {},
+      results: []
+    }
+  }
+}
 
 Dir.glob('dump/*.html') do |file|
   doc = Nokogiri::HTML(File.open(file))
@@ -11,12 +18,22 @@ Dir.glob('dump/*.html') do |file|
 
   year, month = file.scan(/\d+/)
 
+  data_point = {
+    year: year.to_i,
+    month: month.to_i
+  }
+
   bars.each do |bar|
     key = bar.xpath('div[contains(@class, "lab")]').first.content
     val = bar.xpath('div[contains(@class, "value")]').first.content.to_f
 
-    results[year][month][key] = val
+    slug = key.downcase.strip.gsub(/[^\w]+/, ' ').gsub(' ', '-')
+    results[:w3counter][:web_browser_market_share][:browser_names][slug] = key
+
+    data_point[key] = val
   end
+
+  results[:w3counter][:web_browser_market_share][:results] << data_point
 end
 
 puts results.to_json

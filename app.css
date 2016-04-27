@@ -1,3 +1,7 @@
+html, body {
+  height: 100%;
+}
+
 body {
   background: #f7f7f7;
   font-family: 'Open Sans', sans-serif;
@@ -37,20 +41,52 @@ h3 {
 
 header {
   padding: 30px 0;
-  text-align: center;
 }
 
 .logo {
-  width: 10%;
+  width: 30%;
+  display: inline-block;
+  text-align: center;
+  margin: 0 0 20px 0;
 }
 
 .page {
-  max-width: 800px;
-  margin: 0 auto; 
+  display: flex;
+  height: 100%;
 }
 
 .box {
-  background: #fff;
+  
   padding: 40px;
   margin-bottom: 40px;
+}
+
+.side {
+  width: 300px;
+  background: #fff;
+  padding: 50px;
+  position: relative;
+}
+
+.content {
+  flex: 1;
+  height: 100%;
+  overflow: auto;
+}
+
+footer {
+  font-size: 12px;
+  position: absolute;
+  bottom: 30px;
+  left: 50px;
+  right: 50px;
+}
+
+.google-visualization-controls-rangefilter-thumblabel {
+  display: block;
+  padding: 10px 0 !important;
+}
+
+.google-visualization-controls-slider-horizontal {
+  width: 300px !important;
 }

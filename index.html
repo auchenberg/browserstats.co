@@ -9,196 +9,45 @@
     <script type="text/javascript" src="node_modules/moment/min/moment.min.js"></script>
     
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
+    <script type="text/javascript" src="app.js"></script>
     
-    
-      function Dashboard() {
-       
-        this.isChartReady = false
-        this.formattedData = null
-        
-        google.charts.load('current', {'packages':['corechart', 'controls', 'table']});
-        google.charts.setOnLoadCallback(this.onChartReady.bind(this));
-      
-        this.fetchData();
-        
-      }
-      
-      Dashboard.prototype.fetchData = function() {
-
-        window.fetch('/latest.json').then(function(response) {
-          return response.json()
-        }.bind(this)).then(function(json) {
-          this.onDataLoaded(json)
-        }.bind(this)).catch(function(ex) {
-          console.log('parsing failed', ex)
-        })  
-     
-      }
-      
-      Dashboard.prototype.onDataLoaded = function(rawData) {
-        
-        var w3CounterData = rawData.w3counter.web_browser_market_share.results
-               
-        this.formattedData = prepareData(w3CounterData);
-        
-        if(this.isChartReady) {
-          this.drawChart()
-        }
-      }    
-      
-      Dashboard.prototype.onChartReady = function() {
-        this.isChartReady = true
-        
-         if(this.formattedData) {
-          this.drawChart()
-        }
-               
-      }  
-   
-      Dashboard.prototype.drawChart = function() {
-                
-        var data = new google.visualization.DataTable(this.formattedData);
-
-        data.sort([{column: 0, desc:true}]);
-        
-        console.log('data', data)
-
-        // Create a dashboard.
-        var dashboard = new google.visualization.Dashboard(
-            document.getElementById('dashboard_div')
-        );
-        
-        var slider = new google.visualization.ControlWrapper({
-              'controlType': 'DateRangeFilter',
-              'containerId': 'control',
-              'options': {
-                'filterColumnLabel': 'Year',
-                'ui': { 'format': { 'pattern': 'MMM, yyyy' } }
-              }
-            });        
-
-        // Create a pie chart, passing some options
-        var lineChart = new google.visualization.ChartWrapper({
-          'chartType': 'LineChart',
-          'containerId': 'chart_div',
-          'options': {
-            width: '100%',
-            height: 500,
-            legend: 'right',
-            pointSize: 7,      
-          },
-          // 'view': {'columns': [0, 1, 2, 3, 4]}
-        });
-      
-        // Create a pie chart, passing some options
-        var dataTable = new google.visualization.ChartWrapper({
-          'chartType': 'Table',
-          'containerId': 'table',
-          'options': {
-            width: '100%',
-            height: 500,
-            legend: 'right',
-            pointSize: 5,      
-          },
-          // 'view': {'columns': [0, 1, 2, 3, 4]}
-        });
-          
-
-        dashboard.bind([slider], [lineChart]);
-        dashboard.bind([slider], [dataTable]);
-        dashboard.draw(data);
-
-      }
-      
-      
-      new Dashboard();
-      
-    function prepareData(input) {        
-      var output = {
-        cols: [
-          { id: 'year', label: 'Year', type: 'date', },
-          { id: 'ie', label: 'Internet Explorer', type: 'number',},
-          { id: 'firefox', label: 'Firefox', type: 'number', },
-          { id: 'safari', label: 'Safari', type: 'number',},
-          { id: 'opera', label: 'Opera', type: 'number',}
-        ]         
-      }   
-      
-      output.rows = input.map(function(data) {  
-        return {
-          c:[
-              { v: moment(data["month"] + "-01-" + data["year"], "MM-DD-YYYY").toDate() },
-              { v: data["Internet Explorer & Edge"]}, 
-              { v: data["Firefox"]}, 
-              { v: data["Safari"]}, 
-              { v: data["Opera"]}, 
-          ]
-        }          
-      })
-              
-      return output;        
-    }
-    
-    </script>
   </head>
   <body>
     
     <div class="page">  
       
-      <header class="media">
-        <h1>Browser<span>Stats</span></h1>
-        <img src="logo.svg" class="logo">
-        <p>Aggregated browser statistics</p>        
-      </header>
-      
-      <div class="box controls">        
-        <h2>Data filtering</h2>
-          <h3>Date range</h3>
-        <div id="control"></div>
-          <h3>Source</h3>
-          Source selector
+      <div class="side">
+        <header class="media">
+          <img src="logo.svg" class="logo">
+          <h1>Browser<span>Stats</span></h1>
+          <p>Aggregated browser statistics</p>        
+        </header>
+        
+        <div class="controls">        
+          <div id="date-filter"></div>
+          <div id="browser-filter"></div>
+        </div>
+        
+        <footer>          
+          <p>A project by Kenneth Auchenberg & Rene Hansen.</p>
           
-          <h3>Browsers</h3>
-          Browser selector 
-      </div>
-        
-      <div class="box  chart">
-        <h2>Global browser statistics from START to END</h2>
-                
-        <div id="chart_div"></div>
-        <div id="table"></div>
-    
-        <button>Save as image</button>
-      </div>
-
-      <div class="box  chart">
-        <h2>Desktop browser statistics from START to END</h2>
-        <h3>source: SOURCE</h3>  
-        
-        <div id="curve_chart" style="width: 100%; height: 500px"></div>
-        
-        <button>Save as image</button>
-      </div>
-      
-      <div class="box  chart">
-        <h2>Mobile browser statistics from START to END</h2>
-        <h3>source: SOURCE</h3>  
-        
-        <div id="curve_chart" style="width: 100%; height: 500px"></div>
-        
-        <button>Save as image</button>
-      </div>
+          <p>The raw data is available on <a href="https://github.com/auchenberg/browserstats.co">GitHub</a>.<p/>
           
-      <footer>
-        <h2>About BrowserStats</h2>
-        
-        <p>A project by Kenneth Auchenberg & Rene Hansen.</p>
-        <p>The raw data is available on github too.<p/>
-        
-        Icon credits: https://www.iconfinder.com/icons/116800/button_line_chart_icon
-      </footer>
+          Icon credits: <a href="https://www.iconfinder.com/icons/116800/button_line_chart_icon">Min Tran Dinh</a>  
+        </footer>        
       
+      </div>
+      
+      <div class="content"">
+        
+        <div class="box chart">
+          <h2>Global browser statistics from START to END</h2>
+                  
+          <div id="chart_div"></div>
+          <div id="table"></div>
+      
+        </div>    
+      </div>
     </div>
     
   </body>

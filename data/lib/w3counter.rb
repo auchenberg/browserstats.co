@@ -15,7 +15,7 @@ class W3Counter < Hash
       wbms = doc.xpath('/html/body/div[4]/div/div/div[2]/div[1]/div')
       bars = wbms.xpath('div[contains(@class,"bar")]')
 
-      year, month = file.scan(/\d+/)
+      year, month = file.scan(/(\d+)-(\d+)/).first
 
       data_point = {
         year: year.to_i,

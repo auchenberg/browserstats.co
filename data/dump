@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+$:.unshift File.dirname(__FILE__)
+
+require 'json'
+
+require 'lib/dump'
+
+path = ARGV[0] || "./dump"
+
+puts Dump.new(path).to_json

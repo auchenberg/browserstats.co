@@ -47,108 +47,119 @@ Dashboard.prototype.drawChart = function() {
   var data = new google.visualization.DataTable(this.formattedData);
   data.sort([{column: 0, desc:true}]);
   
-  var distinctValues = data.getDistinctValues(1);
-  
-  console.log('distinctValues', distinctValues)
-  
+  // Pivot the data for table
+  var distinctValues = data.getDistinctValues(1);  
   var viewColumns = [
     {
       type: 'date',
+      label: 'Date',
       calc: function (dt, row) {
-          var val = dt.getValue(row, 0);
-          return val
+        var val = dt.getValue(row, 0);
+        return val
       }
     }
   ];
+  
+  var groupColumns = [];
+   
   for (var i = 0; i < distinctValues.length; i++) {
-      viewColumns.push({
-          type: 'number',
-          label: distinctValues[i],
-          calc: (function (x) {
-              return function (dt, row) {
-                 return (dt.getValue(row, 1) === x ) ?  dt.getValue(row, 2) : null  
-              }
-          })(distinctValues[i])
-      });
+    viewColumns.push({
+      type: 'number',
+      label: distinctValues[i],
+      calc: (function (x) {
+        return function (dt, row) {
+          return (dt.getValue(row, 1) === x ) ?  dt.getValue(row, 2) : null  
+        }
+      })(distinctValues[i])
+    })
+    groupColumns.push({
+      column: i+1,
+      type: 'number',
+      aggregation: google.visualization.data.sum
+    })          
   }
   
-  var pivotedData = new google.visualization.DataView(data);
-  pivotedData.setColumns(viewColumns);
-  
-  console.log('viewColumns', viewColumns)
-  
-  console.log('pivotedData', pivotedData)
-  
-  // next, we group the view on column A, which gets us the pivoted data
-  // var pivotedData = google.visualization.data.group(view, [0, 1], groupColumns);
-  
-  // Create a dashboard.
+  var view = new google.visualization.DataView(data);
+  view.setColumns(viewColumns);
+  var pivotedData = new google.visualization.data.group(view, [0], groupColumns);
+   
+  // Rendering of dashboard
   var dashboard = new google.visualization.Dashboard(
-      document.getElementById('dashboard_div')
-  );
+    document.getElementById('dashboard_div')
+  )
   
   var slider = new google.visualization.ControlWrapper({
-        'controlType': 'DateRangeFilter',
-        'containerId': 'date-filter',
-        'options': {
-          'filterColumnLabel': 'Date',
-          'ui': {
-            label: '',
-            labelStacking : 'vertical', 
-            format: {
-              pattern: 'MMM, yyyy'
-            }
-          }
+    controlType: 'DateRangeFilter',
+    containerId: 'date-filter',
+    options: {
+      filterColumnLabel: 'Date',
+      ui: {
+        label: '',
+        labelStacking : 'vertical', 
+        format: {
+          pattern: 'MMM, yyyy'
         }
-      });        
+      }
+    }
+  })
 
   var browserFilter = new google.visualization.ControlWrapper({
-        'controlType': 'CategoryFilter',
-        'containerId': 'browser-filter',
-        'options': {
-          'filterColumnIndex': 1,
-          'selectedValuesLayout': 'belowStacked'
-        }
-      });  
-      
-      
+    controlType: 'CategoryFilter',
+    containerId: 'browser-filter',
+    options: {
+      filterColumnIndex: 1,
+      selectedValuesLayout: 'belowStacked',
+      ui: {
+        caption: 'Select browsers to filter',
+        label: ''
+      }
+    }
+  })  
+        
   var lineChart = new google.visualization.ChartWrapper({
-    'chartType': 'LineChart',
-    'containerId': 'chart_div',
-    'options': {
+    chartType: 'LineChart',
+    containerId: 'chart_div',
+    options: {
       width: '100%',
       height: 500,
       legend: 'right',
-      pointSize: 5,      
+      titleTextStyle: {
+        fontSize: '24'
+      },
+      title: 'Global Browser Statistics, START to END, <source>',
+      interpolateNulls: true,
     },
     view: {
-        columns: viewColumns
-    },
-
-  });
-
-  var dataTable = new google.visualization.ChartWrapper({
-    'chartType': 'Table',
-    'containerId': 'table',
-    'options': {
-      width: '100%',
-      height: 500,
-    },
-    view: {
-        columns: viewColumns
-    },
-  });
-      
-  dashboard.bind([slider, browserFilter], [lineChart]);
-  dashboard.bind([slider, browserFilter], [dataTable]);
+      columns: 
+        view.getViewColumns()
+    }
+  })
   
-  dashboard.draw(data);
+  dashboard.bind([slider, browserFilter], [lineChart]);
+  
+  // var dataTable = new google.visualization.ChartWrapper({
+  //   'chartType': 'Table',
+  //   'containerId': 'table',
+  //   'options': {
+  //     width: '100%',
+  //     height: 500,
+  //   },
+  //   view: {
+  //     columns: 
+  //       view.getViewColumns()
+  //   },
+    
+  // });
+  // dashboard.bind([slider, browserFilter], [dataTable]);
+      
+  dashboard.draw(data)
 
 }
        
 new Dashboard();
     
 function prepareData(input) {        
+  
   var output = {
     cols: [
       { id: 'year', label: 'Date', type: 'date', },
@@ -159,19 +170,15 @@ function prepareData(input) {
   }   
   
   input.forEach(function(data) { 
-    
     ["Internet Explorer & Edge","Firefox", "Safari", "Opera" ].forEach(function(browserName) {
-      
       var row = {
         c: [
-            { v: moment(data["month"] + "-01-" + data["year"], "MM-DD-YYYY").toDate() },
+            { v: moment(data["month"] + "-01-" + data["year"], "MM-DD-YYYY").toDate()},
             { v: browserName}, 
             { v: data[browserName]},
         ]
       }
-    
-      output.rows.push(row)
-             
+      output.rows.push(row)      
     })
   })
           

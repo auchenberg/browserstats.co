@@ -2,7 +2,7 @@ function Dashboard() {
   
   this.isChartReady = false
   this.formattedData = null
-  
+    
   google.charts.load('current', {'packages':['corechart', 'controls', 'table']});
   google.charts.setOnLoadCallback(this.onChartReady.bind(this));
 
@@ -24,9 +24,8 @@ Dashboard.prototype.fetchData = function() {
     
 Dashboard.prototype.onDataLoaded = function(rawData) {
   
-  var w3CounterData = rawData.w3counter.web_browser_market_share.results
           
-  this.formattedData = prepareData(w3CounterData);
+  this.formattedData = prepareData(rawData.w3counter);
   
   if(this.isChartReady) {
     this.drawChart()
@@ -180,7 +179,11 @@ Dashboard.prototype.drawChart = function() {
        
 new Dashboard();
     
-function prepareData(input) {        
+function prepareData(input) {  
+  
+  var stats = input.web_browser_market_share.results;  
+  var browsers = input.web_browser_market_share.browser_names;  
+  var browserNames = Object.keys(browsers).map(function(k){return browsers[k]});
   
   var output = {
     cols: [
@@ -191,8 +194,10 @@ function prepareData(input) {
     rows: []
   }   
   
-  input.forEach(function(data) { 
-    ["Internet Explorer & Edge","Firefox", "Safari", "Opera" ].forEach(function(browserName) {
+  
+  
+  stats.forEach(function(data) { 
+    browserNames.forEach(function(browserName) {
       var row = {
         c: [
             { v: moment(data["month"] + "-01-" + data["year"], "MM-DD-YYYY").toDate()},

@@ -35,6 +35,7 @@ Dashboard.prototype.onDataLoaded = function(rawData) {
 
 Dashboard.prototype.onChartReady = function() {
   this.isChartReady = true
+  this.dateFormatter = new google.visualization.DateFormat({pattern: 'MMM yyyy'});
   
     if(this.formattedData) {
     this.drawChart()
@@ -42,6 +43,22 @@ Dashboard.prototype.onChartReady = function() {
           
 }  
 
+Dashboard.prototype.updateTitleFromState = function() {
+  var state = this.dateFilter.getState()
+  
+  if(!state.lowValue) {
+    return
+  }
+  
+  var low = this.dateFormatter.formatValue(state.lowValue)
+  var high = this.dateFormatter.formatValue(state.highValue)
+  
+  var title = 'Global Browser Statistics, ' + low + ' to ' + high
+  
+  this.lineChart.setOption('title', title)
+  this.lineChart.draw();    
+}
+  
 Dashboard.prototype.drawChart = function() {
           
   var data = new google.visualization.DataTable(this.formattedData);
@@ -88,7 +105,7 @@ Dashboard.prototype.drawChart = function() {
     document.getElementById('dashboard_div')
   )
   
-  var slider = new google.visualization.ControlWrapper({
+  this.dateFilter = new google.visualization.ControlWrapper({
     controlType: 'DateRangeFilter',
     containerId: 'date-filter',
     options: {
@@ -102,8 +119,12 @@ Dashboard.prototype.drawChart = function() {
       }
     }
   })
-
-  var browserFilter = new google.visualization.ControlWrapper({
+  
+  google.visualization.events.addListener(this.dateFilter, 'statechange', function() {
+    this.updateTitleFromState();
+  }.bind(this));
+ 
+  this.browserFilter = new google.visualization.ControlWrapper({
     controlType: 'CategoryFilter',
     containerId: 'browser-filter',
     options: {
@@ -116,7 +137,7 @@ Dashboard.prototype.drawChart = function() {
     }
   })  
         
-  var lineChart = new google.visualization.ChartWrapper({
+  this.lineChart = new google.visualization.ChartWrapper({
     chartType: 'LineChart',
     containerId: 'chart_div',
     options: {
@@ -126,7 +147,7 @@ Dashboard.prototype.drawChart = function() {
       titleTextStyle: {
         fontSize: '24'
       },
-      title: 'Global Browser Statistics, START to END, <source>',
+      title: 'Global Browser Statistics',
       interpolateNulls: true,
     },
     view: {
@@ -135,7 +156,7 @@ Dashboard.prototype.drawChart = function() {
     }
   })
   
-  dashboard.bind([slider, browserFilter], [lineChart]);
+  dashboard.bind([this.dateFilter, this.browserFilter], [this.lineChart]);
   
   // var dataTable = new google.visualization.ChartWrapper({
   //   'chartType': 'Table',
@@ -153,6 +174,7 @@ Dashboard.prototype.drawChart = function() {
   // dashboard.bind([slider, browserFilter], [dataTable]);
       
   dashboard.draw(data)
+  this.updateTitleFromState()
 
 }
        

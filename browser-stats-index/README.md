@@ -8,12 +8,19 @@ A comprehensive browser statistics dashboard that aggregates market share data f
 
 ## 🌟 Features
 
+### Real Web Scraping with Browserbase
+- **Live Data Collection**: Automated scraping using Browserbase + Stagehand framework
+- **Intelligent Fallbacks**: Graceful degradation to mock data if scraping fails
+- **Rate Limiting**: Respectful scraping with configurable delays and concurrency
+- **Health Monitoring**: Built-in scraper health checks and manual controls
+- **Caching System**: Smart caching reduces API calls and improves performance
+
 ### Data Sources Integration
-- **Wikipedia Usage Share**: Community-maintained browser statistics
-- **GitHub Browser Stats**: Historical data from the datasets/browser-stats repository  
-- **NetMarketShare**: Commercial browser market share analytics
-- **Analytics.usa.gov**: US Government website analytics data
-- **Global Stats**: Comprehensive global browser usage statistics
+- **Wikipedia Usage Share**: Live-scraped community-maintained browser statistics
+- **GitHub Browser Stats**: Real-time data from the datasets/browser-stats repository  
+- **Analytics.usa.gov**: Live US Government website analytics scraping
+- **NetMarketShare**: Commercial browser market share analytics (mock)
+- **Global Stats**: Comprehensive global browser usage statistics (mock)
 
 ### Analytics Dashboard
 - **Real-time Market Share**: Live browser market share percentages
@@ -50,15 +57,28 @@ A comprehensive browser statistics dashboard that aggregates market share data f
    yarn install
    ```
 
-3. **Start the development server**
+3. **Configure Browserbase (Optional)**
+   ```bash
+   # Copy environment template
+   cp .env.local.example .env.local
+   
+   # Add your Browserbase credentials to .env.local
+   BROWSERBASE_API_KEY=your_api_key
+   BROWSERBASE_PROJECT_ID=your_project_id
+   SCRAPING_ENABLED=true
+   ```
+
+4. **Start the development server**
    ```bash
    npm run dev
    # or
    yarn dev
    ```
 
-4. **Open your browser**
+5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
+
+> **Note**: Without Browserbase credentials, the app will use mock data. See [BROWSERBASE_INTEGRATION.md](./BROWSERBASE_INTEGRATION.md) for full setup instructions.
 
 ### Build for Production
 
@@ -83,6 +103,9 @@ browser-stats-index/
 ├── src/
 │   ├── app/                    # Next.js app router
 │   │   ├── api/               # API routes
+│   │   │   ├── browser-stats/ # Browser statistics endpoint
+│   │   │   ├── trends/        # Trends endpoint
+│   │   │   └── scraper-health/# Scraper monitoring endpoint
 │   │   ├── globals.css        # Global styles
 │   │   ├── layout.tsx         # Root layout
 │   │   └── page.tsx           # Homepage
@@ -93,10 +116,17 @@ browser-stats-index/
 │   │   ├── Header.tsx
 │   │   └── StatsDashboard.tsx
 │   ├── lib/                   # Utility functions
+│   │   ├── scrapers/         # Web scraping modules
+│   │   │   ├── wikipediaScraper.ts
+│   │   │   ├── githubScraper.ts
+│   │   │   ├── analyticsUSAScraper.ts
+│   │   │   └── scraperOrchestrator.ts
 │   │   └── dataServices.ts    # Data fetching services
 │   └── types/                 # TypeScript definitions
 │       └── browser.ts
 ├── public/                    # Static assets
+├── .env.local.example         # Environment variables template
+├── BROWSERBASE_INTEGRATION.md # Detailed scraping setup guide
 └── package.json
 ```
 
@@ -150,6 +180,23 @@ Returns historical trend data for a specific browser.
 **Query Parameters:**
 - `browser` (required): Browser name
 - `days` (optional): Number of days of history (default: 30)
+
+### Scraper Health Monitoring
+```
+GET /api/scraper-health
+```
+Returns health status of all web scrapers.
+
+```
+POST /api/scraper-health
+Content-Type: application/json
+
+{
+  "action": "scrape",
+  "source": "wikipedia" // optional
+}
+```
+Manually triggers scraping operations for testing or immediate updates.
 
 ## 🎨 Design System
 

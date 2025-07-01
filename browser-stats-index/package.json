@@ -22,6 +22,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@browserbasehq/stagehand": "^2.4.0",
     "@headlessui/react": "^2.2.4",
     "axios": "^1.10.0",
     "cheerio": "^1.1.0",

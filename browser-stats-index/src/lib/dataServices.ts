@@ -2,6 +2,7 @@
 // import { parse } from 'csv-parse/sync';
 // import * as cheerio from 'cheerio';
 import { BrowserStat, DataSource, BrowserTrend } from '@/types/browser';
+import { scraperOrchestrator } from './scrapers/scraperOrchestrator';
 
 // Data source configurations
 export const DATA_SOURCES: DataSource[] = [
@@ -103,18 +104,19 @@ export class BrowserDataService {
     }
 
     try {
-      // In production, this would scrape the Wikipedia page
-      // For now, returning mock data
-      const data = generateMockBrowserData().map(stat => ({
-        ...stat,
-        source: 'Wikipedia'
-      }));
-      
+      // Use scraper orchestrator for real data
+      const data = await scraperOrchestrator.scrapeSource('wikipedia');
       this.setCache(cacheKey, data);
       return data;
     } catch (error) {
       console.error('Error fetching Wikipedia data:', error);
-      return generateMockBrowserData();
+      // Fallback to mock data
+      const data = generateMockBrowserData().map(stat => ({
+        ...stat,
+        source: 'Wikipedia'
+      }));
+      this.setCache(cacheKey, data);
+      return data;
     }
   }
 
@@ -125,18 +127,20 @@ export class BrowserDataService {
     }
 
     try {
-      // In production, this would fetch from the GitHub repository
+      // Use scraper orchestrator for real data
+      const data = await scraperOrchestrator.scrapeSource('github');
+      this.setCache(cacheKey, data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching GitHub browser stats:', error);
+      // Fallback to mock data
       const data = generateMockBrowserData().map(stat => ({
         ...stat,
         source: 'GitHub Browser Stats',
         marketShare: stat.marketShare * 0.95 // Slight variation
       }));
-      
       this.setCache(cacheKey, data);
       return data;
-    } catch (error) {
-      console.error('Error fetching GitHub browser stats:', error);
-      return generateMockBrowserData();
     }
   }
 
@@ -169,19 +173,21 @@ export class BrowserDataService {
     }
 
     try {
-      // In production, this would fetch from analytics.usa.gov API
+      // Use scraper orchestrator for real data
+      const data = await scraperOrchestrator.scrapeSource('analyticsUSA');
+      this.setCache(cacheKey, data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching Analytics.usa.gov data:', error);
+      // Fallback to mock data
       const data = generateMockBrowserData().map(stat => ({
         ...stat,
         source: 'Analytics.usa.gov',
         category: 'desktop' as const,
         region: 'United States'
       }));
-      
       this.setCache(cacheKey, data);
       return data;
-    } catch (error) {
-      console.error('Error fetching Analytics.usa.gov data:', error);
-      return generateMockBrowserData();
     }
   }
 
@@ -210,52 +216,74 @@ export class BrowserDataService {
     sources: Record<string, BrowserStat[]>;
     aggregated: BrowserStat[];
   }> {
-    const [wikipedia, github, netmarket, analyticsUSA, globalStats] = await Promise.all([
-      this.fetchWikipediaBrowserData(),
-      this.fetchGitHubBrowserStats(),
-      this.fetchNetMarketShareData(),
-      this.fetchAnalyticsUSAData(),
-      this.fetchGlobalStatsData()
-    ]);
-
-    const sources = {
-      wikipedia,
-      github,
-      netmarket,
-      analyticsUSA,
-      globalStats
-    };
-
-    // Aggregate data by averaging market shares across sources
-    const browserMap = new Map<string, BrowserStat[]>();
-    
-    Object.values(sources).flat().forEach(stat => {
-      if (!browserMap.has(stat.name)) {
-        browserMap.set(stat.name, []);
-      }
-      browserMap.get(stat.name)!.push(stat);
-    });
-
-    const aggregated: BrowserStat[] = Array.from(browserMap.entries()).map(([name, stats]) => {
-      const avgMarketShare = stats.reduce((sum, stat) => sum + stat.marketShare, 0) / stats.length;
-      const avgChange24h = stats.reduce((sum, stat) => sum + (stat.change24h || 0), 0) / stats.length;
-      const avgChange7d = stats.reduce((sum, stat) => sum + (stat.change7d || 0), 0) / stats.length;
-      const avgChange30d = stats.reduce((sum, stat) => sum + (stat.change30d || 0), 0) / stats.length;
+    try {
+      // Use scraper orchestrator to get data from all sources
+      const scrapingResult = await scraperOrchestrator.scrapeAll();
       
-      return {
-        name,
-        marketShare: avgMarketShare,
-        change24h: avgChange24h,
-        change7d: avgChange7d,
-        change30d: avgChange30d,
-        lastUpdated: new Date().toISOString(),
-        source: 'Aggregated',
-        category: 'global' as const,
-        version: stats[0].version
+      // Fill in missing sources with mock data for compatibility
+      const allSources = {
+        wikipedia: scrapingResult.sources.wikipedia || await this.fetchWikipediaBrowserData(),
+        github: scrapingResult.sources.github || await this.fetchGitHubBrowserStats(),
+        netmarket: await this.fetchNetMarketShareData(), // Keep as mock for now
+        analyticsUSA: scrapingResult.sources.analyticsUSA || await this.fetchAnalyticsUSAData(),
+        globalStats: await this.fetchGlobalStatsData() // Keep as mock for now
       };
-    }).sort((a, b) => b.marketShare - a.marketShare);
 
-    return { sources, aggregated };
+      return {
+        sources: allSources,
+        aggregated: scrapingResult.aggregated
+      };
+    } catch (error) {
+      console.error('Error in fetchAllBrowserData:', error);
+      
+      // Fallback to individual methods
+      const [wikipedia, github, netmarket, analyticsUSA, globalStats] = await Promise.all([
+        this.fetchWikipediaBrowserData(),
+        this.fetchGitHubBrowserStats(),
+        this.fetchNetMarketShareData(),
+        this.fetchAnalyticsUSAData(),
+        this.fetchGlobalStatsData()
+      ]);
+
+      const sources = {
+        wikipedia,
+        github,
+        netmarket,
+        analyticsUSA,
+        globalStats
+      };
+
+      // Aggregate data by averaging market shares across sources
+      const browserMap = new Map<string, BrowserStat[]>();
+      
+      Object.values(sources).flat().forEach(stat => {
+        if (!browserMap.has(stat.name)) {
+          browserMap.set(stat.name, []);
+        }
+        browserMap.get(stat.name)!.push(stat);
+      });
+
+      const aggregated: BrowserStat[] = Array.from(browserMap.entries()).map(([name, stats]) => {
+        const avgMarketShare = stats.reduce((sum, stat) => sum + stat.marketShare, 0) / stats.length;
+        const avgChange24h = stats.reduce((sum, stat) => sum + (stat.change24h || 0), 0) / stats.length;
+        const avgChange7d = stats.reduce((sum, stat) => sum + (stat.change7d || 0), 0) / stats.length;
+        const avgChange30d = stats.reduce((sum, stat) => sum + (stat.change30d || 0), 0) / stats.length;
+        
+        return {
+          name,
+          marketShare: avgMarketShare,
+          change24h: avgChange24h,
+          change7d: avgChange7d,
+          change30d: avgChange30d,
+          lastUpdated: new Date().toISOString(),
+          source: 'Aggregated',
+          category: 'global' as const,
+          version: stats[0].version
+        };
+      }).sort((a, b) => b.marketShare - a.marketShare);
+
+      return { sources, aggregated };
+    }
   }
 
   async fetchHistoricalTrends(browser: string, days: number = 30): Promise<BrowserTrend[]> {

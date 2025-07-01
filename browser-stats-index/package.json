@@ -1,0 +1,49 @@
+{
+  "name": "browser-stats-index",
+  "version": "0.1.0",
+  "description": "Comprehensive browser statistics dashboard aggregating market share data from multiple trusted sources",
+  "keywords": [
+    "browser",
+    "statistics",
+    "market-share",
+    "analytics",
+    "dashboard",
+    "nextjs",
+    "typescript",
+    "tailwind"
+  ],
+  "author": "Browser Stats Index Team",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@browserbasehq/stagehand": "^2.4.0",
+    "@headlessui/react": "^2.2.4",
+    "axios": "^1.10.0",
+    "cheerio": "^1.1.0",
+    "clsx": "^2.1.1",
+    "csv-parse": "^5.6.0",
+    "lucide-react": "^0.525.0",
+    "next": "15.3.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^3.0.2"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
